@@ -3,10 +3,9 @@ output.json
 .git
 output.json
 missfont.log
-#Project.org#
 Project.tex~
 JMdict_e*
 __pycache__
 Project.tex
-#*
-.#*
+.#Project.org
+\#Project.org#

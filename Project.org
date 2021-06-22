@@ -106,29 +106,14 @@
   + The sense-information elements provided for additional information to be recorded about a sense.
   + Typical usage would be to indicate such things as level of currency of a sense, the regional variations, etc.
 
-* Use Cases
-
-This section will outline the use cases for this project, which will help in defining the database schema and algorithms needed. The web application
-will be referred to from here as 'the app', and any possible user simply as 'the user.'
-
-1) The app will deliver an audio file to the user, along with a corresponding audio transcription of the file. The user will listen to the clip and 1) simply reveal the transcription, or 2) attempt to answer with the correct transcription (seeing the answer upon submission).
-2) The user will be able to create and edit 'decks' of 'flashcards' and test themselves with the flashcards.
-3) The user will be able to look up any word displayed on the app and see an entry for the word. The entries will include:
-   - The definition of the word
-   - Alternative words (Same definition)
-   - Words used within the word
-   - Kanji used within the word
-   - Examples of the word
-   - JLPT level and other tags
-4) The user will be able to convert words and example sentences into flashcards and add them to a deck
-   
 * Scripts
+All scripts can be accessed from the main 'JMdictUtils.py' script, or by running them directly, as detailed below.
 
 ** JMdictToJson.py
 *** Usage
 Outputs the JMdict to a JSON file
-
 The script can be ran with the following command:
+
 #+BEGIN_SRC
 python3 JMdictToJSON.py [--option]
 #+END_SRC
@@ -139,7 +124,7 @@ The following options are available for use with the script.
   1. By supplying --indent=#, will cause each nested level in the JSON file to have # number of indents inserted at the front of the line
 + low memory
   - With --low-memory, tells the parser to keep a low memory profile. The output is written in chunks (currently every 10,000 entries), and
-    entries are not kept in memory. In the future when analytical capabilities are added to this project, some with likely not be available with this mode enabled.
+    entries are not kept in memory.
 
 *** Output
 Current output is hardcoded to fit the needs of my own projects. Revisions will be made to make output format customizable. The following two examples show the format of the output. Note that since certain fields are optional for any given entry, some fields are omitted.
@@ -192,6 +177,7 @@ Current output is hardcoded to fit the needs of my own projects. Revisions will 
 *** Usage
 Outputs a random selection of words to a JSON file for analytical purposes
 The script can be ran with the following command:
+
 #+BEGIN_SRC
 python3 RandomWordsToJSON.py
 #+END_SRC
