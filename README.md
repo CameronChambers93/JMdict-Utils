@@ -1,13 +1,14 @@
-# JMdict_parser
+# JMdict-Utils
 
-The purpose of this project is to parse the Japanese-Multilingual Dictionary (JMdict) XML-file in order to produce a usable JSON file for use in other projects. Will eventually be used to analyze the JMdict file for various purposes.
+The purpose of this project was originally just to parse the Japanese-Multilingual Dictionary (JMdict) XML-file in order to produce a usable JSON file for use in other projects. It is growing now to include other functionalities.
 
-The JMDict_e file included in this repo is the most recent version of the file as of 06/01/2021. Work will be done to ensure this project is compatible with future versions of the JMdict file, as features are occasionally added to the file.
+All utilities can be accessed by running ```python3 JMdictUtils.py``` or by accessing the scripts directly, as detailed below.
 
 ## JMdict
 [Information regarding the JMdict project can be found here](https://www.edrdg.org/jmdict/j_jmdict.html)
 
-## Usage
+## JMdictToJSON
+### Usage
 ```
 git clone https://github.com/CameronChambers93/JMdict_parser.git
 cd JMdict_parser
@@ -17,7 +18,7 @@ Options
 * --indent=number : Number of leading spaces added to each nested level when outputting JSON
 * --low-memory: This mode allows the script to run on machines with low memory. When analytics are added to this project, it is likely that some may not function with this mode enabled
 
-## Output
+### Output
 Current output is hardcoded to fit the needs of my own projects. Revisions will be made to make output format customizable. The following two examples show the format of the output. Note that since certain fields are optional for any given entry, some fields are omitted.
 
 
@@ -62,3 +63,16 @@ Current output is hardcoded to fit the needs of my own projects. Revisions will 
   ]
 }
 ```
+
+## RandomWordsToJSON
+### Usage
+Outputs a random selection of words to a JSON file for analytical purposes
+The script can be ran with the following command:
+```
+python3 RandomWordsToJSON.py
+```
+
+Options will be available in the future to format the output
+
+### Output
+Currently set to output ~10000 words with word length > 6
