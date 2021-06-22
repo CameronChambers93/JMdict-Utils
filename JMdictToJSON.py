@@ -6,9 +6,13 @@ import re
 import time
 import math
 import JMdictUtils
+from tqdm import tqdm
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 FILENAME = os.path.join(CURRENT_DIR, 'JMdict_e')
+
+OUTPUT_FILENAME = "JMdict_e.json"
+
 
 # Class used to handle spacing and newlines when printing text
 class Text:
@@ -174,6 +178,8 @@ class PCData(Text):
         if type(value) == bool:
             if value == False:
                 return ''
+            else:
+                value = 'true'  # Undo Python's boolean capitalization
         elif value == None or len(value) == 0:
             return ''
         newline = self.getNewline(indent)
@@ -184,9 +190,7 @@ class PCData(Text):
         return msg
 
     def getValue(self):
-        if type(self.value) == bool:
-            return str(self.value).lower()  # Undo Python's boolean capitalization
-        elif type(self.value) == str:
+        if type(self.value) == str:
             return self.value.replace('"', '\\"')   # Make sure double quotes are escaped properly
         else:
             return self.value
@@ -350,14 +354,14 @@ class Controller(Text):
         line = re.sub(r'<!-- | -->\n', '', line)
         if '<' in line:
             entityType = self.addEntityType(line)
-            line = self.read_file.readline()
+            line = self.getNextLine()
             while ('<!--' not in line):
                 line = re.sub(r'<!ENTITY |>', '', line)
                 words = line.split(' ', maxsplit=1)
                 entityName = words[0]
                 entityValue = words[1]
                 self.entities.addEntity(entityType, entityName, entityValue)
-                line = self.read_file.readline()
+                line = self.getNextLine()
                 
     def parseEnt_seq(self, line) -> str:
         return Ent_seq(re.sub(r'<[/]*ent_seq>(\n)*', '', line))
@@ -372,17 +376,17 @@ class Controller(Text):
         return PCData('ke_pri', re.sub(r'<[/]*ke_pri>(\n)*', '', line))
 
     def processK_Ele(self):
-        line = self.read_file.readline()
+        line = self.getNextLine()
         keb = self.parseKeb(line)
         ke_inf = []
         ke_pri = []
-        line = self.read_file.readline()
+        line = self.getNextLine()
         while '</k_ele>' not in line:
             if 'ke_inf' in line:
                 ke_inf.append(self.parseKe_inf(line))
             elif 'ke_pri' in line:
                 ke_pri.append(self.parseKe_pri(line))
-            line = self.read_file.readline()
+            line = self.getNextLine()
         return K_Ele(keb, ke_inf, ke_pri)
 
 
@@ -400,12 +404,12 @@ class Controller(Text):
         return PCData('re_inf', re.sub(r'(;)*<[/]*re_inf>(\n)*(&)*', '', line))
     
     def processR_Ele(self):
-        line = self.read_file.readline()
+        line = self.getNextLine()
         reb = self.parseReb(line)
-        line = self.read_file.readline()
+        line = self.getNextLine()
         if 're_nokanji' in line:
             re_nokanji = True
-            line = self.read_file.readline()
+            line = self.getNextLine()
         else:
             re_nokanji = False
         re_restr = []
@@ -418,7 +422,7 @@ class Controller(Text):
                 re_inf.append(self.parseRe_inf(line))
             elif 're_pri' in line:
                 re_pri.append(self.parseRe_pri(line))
-            line = self.read_file.readline()
+            line = self.getNextLine()
         return R_Ele(reb, re_nokanji, re_restr, re_inf, re_pri)
             
     
@@ -468,7 +472,7 @@ class Controller(Text):
         lsource = []
         dial = []
         gloss = []
-        line = self.read_file.readline()
+        line = self.getNextLine()
         while '</sense>' not in line:
             if '<stagk' in line:
                 stagk.append(self.parseStagk(line))
@@ -492,17 +496,16 @@ class Controller(Text):
                 dial.append(self.parseDial(line))
             elif '<gloss' in line:
                 gloss.append(self.parseGloss(line))
-            line = self.read_file.readline()
+            line = self.getNextLine()
         return Sense(stagk, stagr, pos, xref, ant, field, misc, s_inf, lsource, dial, gloss)
     
     def processEntry(self, low_memory=False):
-        line = self.read_file.readline()
+        line = self.getNextLine()
         ent_seq = self.parseEnt_seq(line)
-        line = self.read_file.readline()
+        line = self.getNextLine()
         k_ele = []
         r_ele = []
         sense = []
-        self.count += 1
         while '</entry>' not in line:
             if 'k_ele' in line:
                 k_ele.append(self.processK_Ele())
@@ -510,40 +513,42 @@ class Controller(Text):
                 r_ele.append(self.processR_Ele())
             elif 'sense' in line:
                 sense.append(self.processSense())
-            line = self.read_file.readline()
+            line = self.getNextLine()
         entry = Entry(ent_seq, k_ele, r_ele, sense)
         if (low_memory):
             return entry
         self.entries[ent_seq.getValue()] = entry
 
+    def getNextLine(self):
+        line = self.read_file.readline()
+        if line != '':
+            self.pbar.update(1)
+        return line
+
+    def getLineCount(self):
+        return len(open(FILENAME, 'r', encoding='utf8').readlines())
+
     def loadDict(self, FILENAME):
-        self.count = 0
         self.read_file = open(FILENAME, "r", encoding="utf8")
 ##          DON'T USE READLINES - No need to load into memory
-        line = self.read_file.readline()
+        line_count = self.getLineCount()
+        self.pbar = tqdm(total=line_count)
+        line = self.getNextLine()
         while (line != ''):
             if ('<!-- ' in line):
                 if ('-->' in line):
                     self.processEntities(line)
                 while ('-->' not in line):
-                    line = self.read_file.readline()
+                    line = self.getNextLine()
             elif '<entry>' in line:
                 self.processEntry()
-                self.count += 1
-                if self.count % 1000 == 0:
-                    self.printStatus()
             try:
-                line = self.read_file.readline()
+                line = self.getNextLine()
             except Exception:
                 line = None
 
-    def printStatus(self):
-        os.system('cls' if os.name=='nt' else 'clear')
-        print(str(math.floor((self.count / 382000)*100)) + '% done')
-        print(self.count)
-
     def saveInPlace(self, FILENAME, indent=0, initialIndent=0):
-        write_file = open('output.json', "w", encoding="utf8")
+        write_file = open(OUTPUT_FILENAME, "w", encoding="utf8")
         write_file.write("")
         write_file.close()
         newline = self.getNewline(indent)
@@ -551,10 +556,12 @@ class Controller(Text):
         msg = self.toStringInPlace(FILENAME, write_file, indent, initialIndent)
         msg = msg[0:-1] # Remove trailing comma
         msg += "{newline}{whitespace2}]".format(newline=newline, whitespace2=whitespace2)
+        self.pbar.close()
         self.appendToFile(msg)
+        print("\nSuccessfully saved to 'JMdict_e.json")
 
     def appendToFile(self, msg):
-        write_file = open('output.json', "a", encoding="utf8")
+        write_file = open(OUTPUT_FILENAME, "a", encoding="utf8")
         write_file.write(msg)
 
     def toStringInPlace(self, FILENAME, write_file, indent=0, initialIndent=0):
@@ -562,23 +569,23 @@ class Controller(Text):
         self.count = 0
         self.read_file = open(FILENAME, "r", encoding="utf8")
 ##          DON'T USE READLINES - No need to load into memory
-        line = self.read_file.readline()
+        line_count = self.getLineCount()
+        self.pbar = tqdm(total=line_count)
+        line = self.getNextLine()
         while (line != ''):
             if ('<!-- ' in line):
                 if ('-->' in line):
                     self.processEntities(line)
                 while ('-->' not in line):
-                    line = self.read_file.readline()
+                    line = self.getNextLine()
             elif '<entry>' in line:
                 msg += self.processEntry(low_memory=True).toString(indent, initialIndent+indent, ',')
                 self.count += 1
-                if self.count % 1000 == 0:
-                    self.printStatus()
                 if self.count % 10000 == 0:
                     self.appendToFile(msg)
                     msg = ""
             try:
-                line = self.read_file.readline()
+                line = self.getNextLine()
             except Exception:
                 line = None
         return msg
@@ -588,28 +595,49 @@ class Controller(Text):
         whitespace2 = self.getWhitespace(indent, initialIndent-indent)
         msg = "["
         comma=','
-        for entry in self.entries.values():
+        values = self.entries.values()
+        for i in range(len(values)):
+            entry = values[i]
             msg += entry.toString(indent, initialIndent+indent, comma)
-        msg = msg[0:-1]
+            if i == len(values) - 1:
+                msg = msg[0:-1]
         msg += "{newline}{whitespace2}]".format(newline=newline, whitespace2=whitespace2)
         return msg
 
-    def saveData(self, indent=0):
-        with open('JMdict_e.json', "w", encoding="utf8") as write_file:
-            write_file.write(self.toString(indent,0))
+    def saveData(self, indent=0, initialIndent=0):
+        self.pbar.close()
+        print("\nSaving file...")
+        with open(OUTPUT_FILENAME, "w", encoding="utf8") as write_file:
+            newline = self.getNewline(indent)
+            whitespace2 = self.getWhitespace(indent, initialIndent-indent)
+            msg = "["
+            comma=','
+            i = 0
+            values = self.entries.values()
+            write_file.write(msg)
+            for entry in tqdm(values):
+                msg = entry.toString(indent, initialIndent+indent, comma)
+                if i == len(values) - 1:
+                    msg = msg[0:-1]
+                i += 1
+                write_file.write(msg)
+            msg = "{newline}{whitespace2}]".format(newline=newline, whitespace2=whitespace2)
+            write_file.write(msg)
+            write_file.close()
+        print("Successfully saved to 'JMdict_e.json")
 
 def startController(indent=0, low_memory=False):
-        controller = Controller()
-        print('loading dict')
-        epoch = time.time()
+    JMdictUtils.checkForDownload()
+    controller = Controller()
+    print('\nLoading JMdict_e\n')
+    epoch = time.time()
 
-        if (low_memory):
-            controller.saveInPlace(FILENAME, indent)
-        else:
-            controller.loadDict(FILENAME)
-            controller.saveData(indent)
-        print("Finished saving to file 'JMdict_e.json'")
-        print('Time elapsed: ' + str(time.time() - epoch))
+    if (low_memory):
+        controller.saveInPlace(FILENAME, indent)
+    else:
+        controller.loadDict(FILENAME)
+        controller.saveData(indent)
+    print('Time elapsed: ' + str(time.time() - epoch))
 
 
 
@@ -634,7 +662,6 @@ if __name__ == '__main__':
                     raise Exception(sys.argv[i])
         startController(indent, low_memory)
     except Exception as e:
-        pdb.set_trace()
         print("Invalid argument '{invalidArg}'".format(invalidArg=e.args[0]))
 
 def getIndentInput():

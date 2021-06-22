@@ -8,9 +8,12 @@ import copy
 import json
 import os
 from tqdm import tqdm
+import JMdictUtils
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 FILENAME = os.path.join(CURRENT_DIR, 'JMdict_e')
+
+LINE_COUNT_OFFSET = 839098      # To offset current error(?) with progress bar
 
 def parse_rele(elements, new_ele):
     for ele in elements:
@@ -24,11 +27,16 @@ def parse_kele(elements, new_ele):
             if new_ele['k_ele'] == '':
                 new_ele['k_ele'] = ele.text
 
+def getLineCount():
+    with open(FILENAME, 'rb') as f:
+        return len(f.readlines())
+
 def saveRandomWords():
+    num_of_lines = getLineCount() - LINE_COUNT_OFFSET
     f = ET.iterparse(FILENAME)
-    count = math.floor(random.random() * 300)
     words = []
-    for event, elements in tqdm(f):
+    count = math.floor(random.random() * 100)
+    for event, elements in tqdm(f, total=num_of_lines):
         if event == 'end' and elements.tag == 'entry' and count > 100:
             new_ele = {'r_ele': '', 'k_ele': ''}
             for ele in elements.iter():
@@ -46,6 +54,8 @@ def saveRandomWords():
     return words
 
 def startUtility():
+    JMdictUtils.checkForDownload()
+    print("\nGenerating random words...")
     words = saveRandomWords()
     file = open('randomWords.json', 'w', encoding='utf-8')
     print("Saving file...")

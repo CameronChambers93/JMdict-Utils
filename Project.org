@@ -1,7 +1,11 @@
-
+#+latex_compiler: xelatex
+#+latex_header: \usepackage[legalpaper,top=1cm,bottom=2cm,left=1cm,right=1cm]{geometry}
+#+latex_header: \usepackage{xeCJK}
+#+latex_header: \setCJKmainfont{MS Mincho} % for \rmfamily
+#+latex_header: \setCJKsansfont{MS Gothic} % for \sffamily
 #+OPTIONS: ^:nil
+\section{Japanese}
 * Introduction
-
    This document will serve as the recordings of my work with parsing the incredibly expansive Japanese to English
    dictionary, JMDICT. The purpose of this parser is to a) generate a JSON version of the file to be used with other
    projects, namely my Yosh!eru project. I am writing this document both for myself and for demonstration purposes. The
@@ -118,17 +122,81 @@ will be referred to from here as 'the app', and any possible user simply as 'the
    - JLPT level and other tags
 4) The user will be able to convert words and example sentences into flashcards and add them to a deck
    
-* Script Usage
+* Scripts
 
-  The script can be ran with the following command:
+** JMdictToJson.py
+*** Usage
+Outputs the JMdict to a JSON file
+
+The script can be ran with the following command:
 #+BEGIN_SRC
-  python3 JMDictToJSON.py [--option]
+python3 JMdictToJSON.py [--option]
 #+END_SRC
 
-  The following options are available for use with the script.
+The following options are available for use with the script.
 
 + indent
   1. By supplying --indent=#, will cause each nested level in the JSON file to have # number of indents inserted at the front of the line
 + low memory
   - With --low-memory, tells the parser to keep a low memory profile. The output is written in chunks (currently every 10,000 entries), and
     entries are not kept in memory. In the future when analytical capabilities are added to this project, some with likely not be available with this mode enabled.
+
+*** Output
+Current output is hardcoded to fit the needs of my own projects. Revisions will be made to make output format customizable. The following two examples show the format of the output. Note that since certain fields are optional for any given entry, some fields are omitted.
+
+
+- indent=0
+  #+BEGIN_SRC
+{ent_seq:"1004660",k_ele:[{keb:"この外",ke_pri:["spec1"]}],r_ele:[{reb:"このほか",re_pri:
+["spec1"]}],sense:[{pos:["conj"],misc:["uk"],gloss:["besides", "moreover","in addition"]}]}
+  #+END_SRC
+- indent=2
+  #+BEGIN_SRC
+  {
+    ent_seq: "1004660",
+    k_ele: [
+      {
+        keb: "この外",
+        ke_pri: [
+          "spec1"
+        ]
+      }
+    ],
+    r_ele: [
+      {
+        reb: "このほか",
+        re_pri: [
+          "spec1"
+        ]
+      }
+    ],
+    sense: [
+      {
+        pos: [
+          "conj"
+        ],
+        misc: [
+          "uk"
+        ],
+        gloss: [
+          "besides",
+          "moreover",
+          "in addition"
+        ]
+      }
+    ]
+  }
+  #+END_SRC
+
+** RandomWordsToJSON.py
+*** Usage
+Outputs a random selection of words to a JSON file for analytical purposes
+The script can be ran with the following command:
+#+BEGIN_SRC
+python3 RandomWordsToJSON.py
+#+END_SRC
+
+Options will be available in the future to format the output
+
+*** Output
+Currently set to output ~10000 words with word length > 6

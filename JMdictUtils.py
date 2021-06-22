@@ -8,6 +8,9 @@ import readchar
 import pdb
 import JMdictToJSON
 import RandomWordsToJSON
+import requests
+import gzip
+import shutil
 
 UTILS = [{'name': 'Random words', 'utility': RandomWordsToJSON},
             {'name': 'Output JSON to file', 'utility': JMdictToJSON}]
@@ -17,34 +20,7 @@ UP_ARROW = "\x1b\x5b\x41"
 DOWN_ARROW = "\x1b\x5b\x42"
 ENTER = "\x0d"
 
-# def xml_parser():
-#     """ Parse the large XML file using generator to speed up load time """
-#     f = ET.iterparse(FILE)
-#     DATA = []
-#     # main_element = f.getroot()
-#     for event, elements in tqdm(f):
-#         if event == 'end' and elements.tag == 'entry':
-#             new_ele = copy.deepcopy(TEMPLATE)
-#             for ele in elements.iter():
-#                 if ele.tag == "ent_seq":
-#                     parse_ent_seq(ele, new_ele)
-#                 elif ele.tag == "r_ele":
-#                     parse_rele(ele, new_ele)
-#                 elif ele.tag == "k_ele":
-#                     parse_kele(ele, new_ele)
-#                 elif ele.tag == "sense":
-#                     parse_sense(ele, new_ele)
-#             DATA.append(new_ele)
-#     return {"words": DATA}
-
-def xml_to_json():
-    """ Convert xml to json and save to file """
-    file = open("JMdict_e.json", "w", encoding="utf8")
-    print("Beginning conversion of JMdict_e")
-    json.dump(xml_parser(), file, indent=2, ensure_ascii=False)
-    print("Conversion finished")
-    print("Saving to file...")
-    file.close()
+JMDICT_URL = "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz"
 
 def clearScreen():
     os.system('cls')
@@ -81,6 +57,58 @@ def showMenu():
     printMenu()
     input = getInput()
     processInput(input)
+
+def checkForDownload():
+    if 'JMdict_e' not in os.listdir():
+        downloadJMdict()
+        unpackJMdict()
+        deleteJMdictZip()
+
+def downloadJMdict():
+    if 'JMdict_e.gz' not in os.listdir():
+        f = open("JMdict_e.gz", 'wb')
+        response = requests.get(JMDICT_URL, stream=True)
+        total = response.headers.get('content-length')
+        total = int(total)
+        print("\nDownloading JMdict.gz...")
+        with tqdm(total=total) as pbar:
+            for data in response.iter_content(chunk_size=max(int(total/1000), 1024*1024)):
+                downloaded = len(data)
+                f.write(data)
+                pbar.update(downloaded)
+                #print('\r[{}{}]'.format('█' * done, '.' * (50-done)))
+
+def _reader_generator(reader):
+    b = reader(1024 * 1024)
+    while b:
+        yield b
+        b = reader(1024 * 1024)
+
+def getGzipNewlineCount():
+    f = gzip.open('JMdict_e.gz', 'rb')
+    f_gen = _reader_generator(f.read)
+    return sum(buf.count(b'\n') for buf in f_gen)
+    
+def deleteJMdictZip():
+    try:
+        os.remove("JMdict_e.gz")
+    except Exception as e:
+        print("Error deleting 'JMdict_e.gz'")
+
+
+def unpackJMdict():
+    linecount = getGzipNewlineCount()
+    print("\nUnpacking JMdict_e.gz\n")
+    with open('JMdict_e', 'wb') as f_out:
+        with gzip.open('JMdict_e.gz', 'rb') as f_in:
+            with tqdm(f_in, total=linecount) as pbar:
+                for line in f_in:
+                    try:
+                        f_out.write(line)
+                        pbar.update(1)
+                    except UnicodeDecodeError as e:
+                        pdb.set_trace()
+
 
 if __name__ == "__main__":
     showMenu()
