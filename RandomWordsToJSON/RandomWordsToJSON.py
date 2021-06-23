@@ -11,8 +11,9 @@ from tqdm import tqdm
 import JMdictUtils
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-FILENAME = os.path.join(CURRENT_DIR, 'JMdict_e')
-
+RESOURCE_DIR = os.path.abspath(os.path.join(__file__, '../../Resources/'))
+JMDICT_FILENAME = os.path.join(RESOURCE_DIR, 'JMdict_e')
+OUTPUT_FILENAME = os.path.join(RESOURCE_DIR, "randomWords.json")
 LINE_COUNT_OFFSET = 839098      # To offset current error(?) with progress bar
 
 def parse_rele(elements, new_ele):
@@ -28,12 +29,12 @@ def parse_kele(elements, new_ele):
                 new_ele['k_ele'] = ele.text
 
 def getLineCount():
-    with open(FILENAME, 'rb') as f:
+    with open(JMDICT_FILENAME, 'rb') as f:
         return len(f.readlines())
 
-def saveRandomWords():
+def getRandomWords():
     num_of_lines = getLineCount() - LINE_COUNT_OFFSET
-    f = ET.iterparse(FILENAME)
+    f = ET.iterparse(JMDICT_FILENAME)
     words = []
     count = math.floor(random.random() * 100)
     for event, elements in tqdm(f, total=num_of_lines):
@@ -44,7 +45,7 @@ def saveRandomWords():
                     parse_kele(ele, new_ele)
                 elif ele.tag == "r_ele":
                     parse_rele(ele, new_ele)
-            if len(new_ele['k_ele']) > 6 or (new_ele['k_ele'] == '' and len(new_ele['r_ele']) > 6):
+            if len(new_ele['k_ele']) > 4 or (new_ele['k_ele'] == '' and len(new_ele['r_ele']) > 4):
                 if new_ele['k_ele'] == '':
                     words.append(new_ele['r_ele'])
                 else:
@@ -56,11 +57,14 @@ def saveRandomWords():
 def startUtility():
     JMdictUtils.checkForDownload()
     print("\nGenerating random words...")
-    words = saveRandomWords()
-    file = open('randomWords.json', 'w', encoding='utf-8')
+    words = getRandomWords()
+    saveWords(words)
+
+def saveWords(words):
+    file = open(OUTPUT_FILENAME, 'w', encoding='utf-8')
     print("Saving file...")
     json.dump(words, file, indent=2, ensure_ascii=False)
-    print("Finished saving to file 'randomWords.json'")
+    print("Finished saving to {}".format(OUTPUT_FILENAME))
     file.close()
 
 if __name__ == "__main__":

@@ -6,14 +6,17 @@ import os
 from tqdm import tqdm
 import readchar
 import pdb
-import JMdictToJSON
-import RandomWordsToJSON
 import requests
 import gzip
 import shutil
+from JMdictToJSON import JMdictToJSON
+from RandomWordsToJSON import RandomWordsToJSON
+from QuerySpeedtest import QuerySpeedtest
 
-UTILS = [{'name': 'Random words', 'utility': RandomWordsToJSON},
-            {'name': 'Output JSON to file', 'utility': JMdictToJSON}]
+UTILS = [{'name': 'Generate Random words', 'utility': RandomWordsToJSON},
+            {'name': 'Output JSON to file', 'utility': JMdictToJSON},
+            {'name': 'JMdict Query Speedtest', 'utility': QuerySpeedtest},
+            ]
 UTIL_CHOICE = 0
 
 UP_ARROW = "\x1b\x5b\x41"
@@ -21,6 +24,8 @@ DOWN_ARROW = "\x1b\x5b\x42"
 ENTER = "\x0d"
 
 JMDICT_URL = "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz"
+
+RESOURCE_DIR = os.path.join(os.path.curdir, 'Resources/')
 
 def clearScreen():
     os.system('cls')
@@ -45,7 +50,7 @@ def startUtility():
 def processInput(input):
     global UTIL_CHOICE
     if input == UP_ARROW:
-        UTIL_CHOICE = (UTIL_CHOICE + 1) % len(UTILS)
+        UTIL_CHOICE = (UTIL_CHOICE - 1) % len(UTILS)
     elif input == DOWN_ARROW:
         UTIL_CHOICE = (UTIL_CHOICE + 1) % len(UTILS)
     elif input == ENTER:
@@ -59,14 +64,14 @@ def showMenu():
     processInput(input)
 
 def checkForDownload():
-    if 'JMdict_e' not in os.listdir():
+    if 'JMdict_e' not in os.listdir('Resources'):
         downloadJMdict()
         unpackJMdict()
         deleteJMdictZip()
 
 def downloadJMdict():
-    if 'JMdict_e.gz' not in os.listdir():
-        f = open("JMdict_e.gz", 'wb')
+    if 'JMdict_e.gz' not in os.listdir('Resources'):
+        f = open("Resources/JMdict_e.gz", 'wb')
         response = requests.get(JMDICT_URL, stream=True)
         total = response.headers.get('content-length')
         total = int(total)
@@ -85,13 +90,13 @@ def _reader_generator(reader):
         b = reader(1024 * 1024)
 
 def getGzipNewlineCount():
-    f = gzip.open('JMdict_e.gz', 'rb')
+    f = gzip.open('Resources/JMdict_e.gz', 'rb')
     f_gen = _reader_generator(f.read)
     return sum(buf.count(b'\n') for buf in f_gen)
     
 def deleteJMdictZip():
     try:
-        os.remove("JMdict_e.gz")
+        os.remove("Resources/JMdict_e.gz")
     except Exception as e:
         print("Error deleting 'JMdict_e.gz'")
 
@@ -99,8 +104,8 @@ def deleteJMdictZip():
 def unpackJMdict():
     linecount = getGzipNewlineCount()
     print("\nUnpacking JMdict_e.gz\n")
-    with open('JMdict_e', 'wb') as f_out:
-        with gzip.open('JMdict_e.gz', 'rb') as f_in:
+    with open('ResourcesJMdict_e', 'wb') as f_out:
+        with gzip.open('Resources/JMdict_e.gz', 'rb') as f_in:
             with tqdm(f_in, total=linecount) as pbar:
                 for line in f_in:
                     try:
@@ -108,6 +113,19 @@ def unpackJMdict():
                         pbar.update(1)
                     except UnicodeDecodeError as e:
                         pdb.set_trace()
+
+
+def checkForJMdict():
+    if 'JMdict_e.json' not in os.listdir(RESOURCE_DIR):
+        print("Requires 'JMdict_e.json' to run, press any key to run 'JMdictToJSON'")
+        readchar.readkey()
+        JMdictToJSON.startUtility()
+
+def checkForRandomWords():
+    if 'randomWords.json' not in os.listdir(RESOURCE_DIR):
+        print("Requires 'randomWords.json' to run, press any key to run 'RandomWordsToJSON'")
+        readchar.readkey()
+        RandomWordsToJSON.startUtility()
 
 
 if __name__ == "__main__":

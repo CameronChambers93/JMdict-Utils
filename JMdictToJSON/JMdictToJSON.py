@@ -9,9 +9,10 @@ import JMdictUtils
 from tqdm import tqdm
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-FILENAME = os.path.join(CURRENT_DIR, 'JMdict_e')
+RESOURCE_DIR = os.path.abspath(os.path.join(__file__, '../../Resources/'))
+FILENAME = os.path.join(RESOURCE_DIR, 'JMdict_e')
 
-OUTPUT_FILENAME = "JMdict_e.json"
+OUTPUT_FILENAME = os.path.join(RESOURCE_DIR, "JMdict_e.json")
 
 
 # Class used to handle spacing and newlines when printing text
@@ -624,7 +625,7 @@ class Controller(Text):
             msg = "{newline}{whitespace2}]".format(newline=newline, whitespace2=whitespace2)
             write_file.write(msg)
             write_file.close()
-        print("Successfully saved to 'JMdict_e.json")
+        print("Successfully saved to {}".format(OUTPUT_FILENAME))
 
 def startController(indent=0, low_memory=False):
     JMdictUtils.checkForDownload()
@@ -685,8 +686,7 @@ def getLowMemoryInput():
     
 
 def startUtility():
-    JMdictUtils.clearScreen()
-    print('------ JMdict to JSON ------\n')
+    print('\n---------- JMdict to JSON ----------\n')
     indent = getIndentInput()
     low_memory = getLowMemoryInput()
     startController(indent, low_memory)
