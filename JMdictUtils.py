@@ -12,10 +12,13 @@ import shutil
 from JMdictToJSON import JMdictToJSON
 from RandomWordsToJSON import RandomWordsToJSON
 from QuerySpeedtest import QuerySpeedtest
+from GenerateJLPTLists import GenerateJLPTLists
+import sys
 
 UTILS = [{'name': 'Generate Random words', 'utility': RandomWordsToJSON},
             {'name': 'Output JSON to file', 'utility': JMdictToJSON},
             {'name': 'JMdict Query Speedtest', 'utility': QuerySpeedtest},
+            {'name': 'Generate List of Words by JLPT', 'utility': GenerateJLPTLists},
             ]
 UTIL_CHOICE = 0
 
@@ -27,11 +30,23 @@ JMDICT_URL = "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz"
 
 RESOURCE_DIR = os.path.join(os.path.curdir, 'Resources/')
 
+def getArgs():
+    args = []
+    if len(sys.argv) > 0:
+        for i in range(1, len(sys.argv)):
+            option = re.search(r'-[-]*([a-z-]*)(=([a-z0-9]*))*', sys.argv[i])
+            if option == None:
+                raise Exception(sys.argv[i])
+            name = option.group(1)
+            value = option.group(3)
+            args.append({'name': name, 'value': value})
+    return args
+
 def clearScreen():
     os.system('cls')
 
 def printMenu():
-    print('JMdict Utilities\n')
+    print('\n--------------- JMdict Utilities ---------------\n')
     count = 0
     for util in UTILS:
         if count == UTIL_CHOICE:
@@ -120,6 +135,11 @@ def checkForJMdict():
         print("Requires 'JMdict_e.json' to run, press any key to run 'JMdictToJSON'")
         readchar.readkey()
         JMdictToJSON.startUtility()
+
+def getJMdict():
+    checkForJMdict()
+    with open(os.path.join(RESOURCE_DIR, 'JMdict_e.json'), encoding='utf8') as f:
+        return json.loads(f.read())
 
 def checkForRandomWords():
     if 'randomWords.json' not in os.listdir(RESOURCE_DIR):

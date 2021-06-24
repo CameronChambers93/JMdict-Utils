@@ -7,12 +7,13 @@ import time
 import copy
 import json
 import os
+import readchar
 from tqdm import tqdm
 import JMdictUtils
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.abspath(os.path.join(__file__, '../../Resources/'))
-JMDICT_FILENAME = os.path.join(RESOURCE_DIR, 'JMdict_e')
+JMDICT_FILENAME = os.path.join(RESOURCE_DIR, 'JMdict_e.json')
 OUTPUT_FILENAME = os.path.join(RESOURCE_DIR, "randomWords.json")
 LINE_COUNT_OFFSET = 839098      # To offset current error(?) with progress bar
 
@@ -28,44 +29,60 @@ def parse_kele(elements, new_ele):
             if new_ele['k_ele'] == '':
                 new_ele['k_ele'] = ele.text
 
-def getLineCount():
-    with open(JMDICT_FILENAME, 'rb') as f:
-        return len(f.readlines())
-
-def getRandomWords():
-    num_of_lines = getLineCount() - LINE_COUNT_OFFSET
-    f = ET.iterparse(JMDICT_FILENAME)
+def getRandomWords(min_word_length = 2):
+    count = 0
+    with open(JMDICT_FILENAME, 'r', encoding='utf8') as f:
+        jmdict = json.loads(f.read())
     words = []
-    count = math.floor(random.random() * 100)
-    for event, elements in tqdm(f, total=num_of_lines):
-        if event == 'end' and elements.tag == 'entry' and count > 100:
-            new_ele = {'r_ele': '', 'k_ele': ''}
-            for ele in elements.iter():
-                if ele.tag == "k_ele":
-                    parse_kele(ele, new_ele)
-                elif ele.tag == "r_ele":
-                    parse_rele(ele, new_ele)
-            if len(new_ele['k_ele']) > 4 or (new_ele['k_ele'] == '' and len(new_ele['r_ele']) > 4):
-                if new_ele['k_ele'] == '':
-                    words.append(new_ele['r_ele'])
-                else:
-                    words.append(new_ele['k_ele'])
-                count = 0
-        count += math.floor(random.random() * 5)
+    with tqdm(total=len(jmdict)) as pbar:
+        for word in jmdict:
+            if count > 10:
+                if 'k_ele' in word:
+                    if len(word['k_ele'][0]['keb']) >= min_word_length:
+                        words.append(word)
+                        count = 0
+                elif len(word['r_ele'][0]['reb']) >= min_word_length:
+                        words.append(word)
+                        count = 0
+            count += math.floor(random.random() * 5)
+            pbar.update(1)
     return words
 
-def startUtility():
+def getMinWordLength():
+    length = input("\nMinimum word length (default = 0): ")
+    try:
+        return int(length)
+    except:
+        return 0
+
+def startUtility(min_word_length=None):
     JMdictUtils.checkForDownload()
-    print("\nGenerating random words...")
-    words = getRandomWords()
+    if min_word_length == None:
+        min_word_length = getMinWordLength()
+    print("\nGenerating random words...\n")
+    words = getRandomWords(min_word_length)
     saveWords(words)
 
 def saveWords(words):
     file = open(OUTPUT_FILENAME, 'w', encoding='utf-8')
-    print("Saving file...")
+    print("\nSaving {} words to file...\n".format(len(words)))
     json.dump(words, file, indent=2, ensure_ascii=False)
     print("Finished saving to {}".format(OUTPUT_FILENAME))
     file.close()
 
+def getArgs():
+    min_word_length = 0
+    args = JMdictUtils.getArgs()
+    for arg in args:
+        name = arg['name']
+        value = arg['value']
+        if name == 'min-word-length' or name == 'm':
+            min_word_length = int(value)
+        else:
+            raise Exception(arg)
+    return min_word_length
+    
+
 if __name__ == "__main__":
-    startUtility()
+    min_word_length = getArgs()
+    startUtility(min_word_length)

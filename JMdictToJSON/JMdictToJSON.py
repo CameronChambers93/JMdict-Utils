@@ -640,27 +640,26 @@ def startController(indent=0, low_memory=False):
         controller.saveData(indent)
     print('Time elapsed: ' + str(time.time() - epoch))
 
-
+def getArgs():
+    indent, low_memory = 0, False
+    args = JMdictUtils.getArgs()
+    for arg in args:
+        name = arg['name']
+        if name == 'low-memory' or name == 'm':
+            low_memory = True
+            continue
+        value = arg['value']
+        if name == 'indent' or name == 'i':
+            indent = int(value)
+        else:
+            raise Exception(arg)
+    return indent, low_memory
+    
 
 
 if __name__ == '__main__':
     try:
-        indent = 0
-        low_memory = False
-        if len(sys.argv) > 0:
-            for i in range(1, len(sys.argv)):
-                option = re.search(r'--([a-z-]*)(=([a-z0-9]*))*', sys.argv[i])
-                if option == None:
-                    raise Exception(sys.argv[i])
-                name = option.group(1)
-                if name == 'low-memory':
-                    low_memory = True
-                    continue
-                value = option.group(3)
-                if name == 'indent':
-                    indent = int(value)
-                else:
-                    raise Exception(sys.argv[i])
+        indent, low_memory = getArgs()
         startController(indent, low_memory)
     except Exception as e:
         print("Invalid argument '{invalidArg}'".format(invalidArg=e.args[0]))
