@@ -86,13 +86,23 @@ Generates two tries from JMdict for word search speed analysis. One trie uses th
 Currently doesn't output any file/has no usage outside other scripts
 
 ## QuerySpeedtest
-### Usage
 Uses RandomWords to run lookup queries in order to test retrieval speeds of various methods.
 
 Currently tests against 1) basic Python dictionary and 2) trie data structure
+### Usage
 ```
 python3 -m QuerySpeedtest.QuerySpeedtest
 ```
 
 ### Output
 Results of the test are written to console
+
+## GenerateJLPTLists
+Generates a list of entry ids corresponding to each level of the Japanese Language Proficiency Test (JLPT)
+### Usage
+```
+python3 -m GenerateJLPTLists.GenerateJLPTLists
+```
+
+### Output
+There are 5 levels 
