@@ -105,4 +105,4 @@ python3 -m GenerateJLPTLists.GenerateJLPTLists
 ```
 
 ### Output
-There are 5 levels 
+Outputs a JSON file containing a dictionary. The dictionary has keys 1-5 and the values are arrays containing the ids of every word belonging to that JLPT level.
