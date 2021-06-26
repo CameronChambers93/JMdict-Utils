@@ -6,7 +6,6 @@ import os
 import re
 import time
 import math
-from types import resolve_bases
 import JMdictUtils
 from tqdm import tqdm
 # from xml.etree import ElementTree

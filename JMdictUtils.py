@@ -119,7 +119,7 @@ def deleteJMdictZip():
 def unpackJMdict():
     linecount = getGzipNewlineCount()
     print("\nUnpacking JMdict_e.gz\n")
-    with open('ResourcesJMdict_e', 'wb') as f_out:
+    with open('Resources/JMdict_e', 'wb') as f_out:
         with gzip.open('Resources/JMdict_e.gz', 'rb') as f_in:
             with tqdm(f_in, total=linecount) as pbar:
                 for line in f_in:
