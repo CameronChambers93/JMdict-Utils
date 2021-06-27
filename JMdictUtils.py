@@ -1,6 +1,4 @@
-from xml.etree import ElementTree as ET 
 import re
-import copy
 import json
 import os
 from tqdm import tqdm
@@ -8,11 +6,11 @@ import readchar
 import pdb
 import requests
 import gzip
-import shutil
 from JMdictToJSON import JMdictToJSON
 from RandomWordsToJSON import RandomWordsToJSON
 from QuerySpeedtest import QuerySpeedtest
 from GenerateJLPTLists import GenerateJLPTLists
+from Tests import testModules
 import sys
 
 UTILS = [{'name': 'Generate Random words', 'utility': RandomWordsToJSON},

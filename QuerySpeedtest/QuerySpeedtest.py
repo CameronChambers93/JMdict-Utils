@@ -1,13 +1,6 @@
 import os
-import pdb
-from random import random
-import sys
-from os import path
 import json
 import JMdictUtils
-import readchar
-from JMdictToJSON import JMdictToJSON
-from RandomWordsToJSON import RandomWordsToJSON
 from JMdictToTries import JMdictToTries
 from tqdm import tqdm
 import time

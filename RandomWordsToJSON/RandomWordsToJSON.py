@@ -1,13 +1,7 @@
-import pdb
 import math
 import random
-from xml.etree import ElementTree as ET 
-import re
-import time
-import copy
 import json
 import os
-import readchar
 from tqdm import tqdm
 import JMdictUtils
 

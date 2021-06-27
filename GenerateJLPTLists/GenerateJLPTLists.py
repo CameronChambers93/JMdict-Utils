@@ -64,7 +64,8 @@ def processEntry(words, ids, common, uncommon):
             found = True
             words.append(id)
     if not found:
-        pdb.set_trace()
+        Exception("Could not process word")
+        # pdb.set_trace()
 
 def addExceptions(words, common):
     if common in WORD_EXCEPTIONS:

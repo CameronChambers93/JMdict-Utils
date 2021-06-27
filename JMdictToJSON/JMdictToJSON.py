@@ -1,14 +1,8 @@
-from copy import Error
-from posixpath import expanduser
-import sys
-import pdb
 import os
 import re
 import time
-import math
 import JMdictUtils
 from tqdm import tqdm
-# from xml.etree import ElementTree
 from lxml import etree as ElementTree
 import copy
 import json
@@ -175,73 +169,6 @@ def loadDict():
             cleanUpDict(new_ele)
             words.append(new_ele)
     return words
-
-def clearFile():
-    write_file = open(OUTPUT_FILENAME, "w", encoding="utf8")
-    write_file.write("")
-    write_file.close()
-
-def saveInPlace(FILENAME, indent=0, initialIndent=0):
-    clearFile()
-    
-    f = getDictAsStringList()
-    print("\nParsing JMdict...\n")
-    parser = ElementTree.XMLParser(resolve_entities=False)
-    tree_parser = ElementTree.fromstringlist(f, parser).iter()
-    words = []
-    for elements in tqdm(tree_parser, total=getModifiedLineCount()):
-        if elements.tag == 'entry':
-            new_ele = copy.deepcopy(ENTRY_TEMPLATE)
-            for ele in elements.iter():
-                if ele.tag == "ent_seq":
-                    parseEnt_seq(ele, new_ele)
-                elif ele.tag == "r_ele":
-                    parseR_ele(ele, new_ele)
-                elif ele.tag == "k_ele":
-                    parseK_ele(ele, new_ele)
-                elif ele.tag == "sense":
-                    parseSense(ele, new_ele)
-            cleanUpDict(new_ele)
-            words.append(new_ele)
-    return words
-    newline = getNewline(indent)
-    whitespace2 = getWhitespace(indent, initialIndent-indent)
-    msg = toStringInPlace(FILENAME, write_file, indent, initialIndent)
-    msg = msg[0:-1] # Remove trailing comma
-    msg += "{newline}{whitespace2}]".format(newline=newline, whitespace2=whitespace2)
-    pbar.close()
-    appendToFile(msg)
-    print("\nSuccessfully saved to 'JMdict_e.json")
-
-def appendToFile(msg):
-    write_file = open(OUTPUT_FILENAME, "a", encoding="utf8")
-    write_file.write(msg)
-
-def toStringInPlace(FILENAME, write_file, indent=0, initialIndent=0):
-    msg = "["
-    count = 0
-    read_file = open(FILENAME, "r", encoding="utf8")
-##          DON'T USE READLINES - No need to load into memory
-    line_count = getLineCount()
-    pbar = tqdm(total=line_count)
-    line = getNextLine()
-    while (line != ''):
-        if ('<!-- ' in line):
-            if ('-->' in line):
-                processEntities(line)
-            while ('-->' not in line):
-                line = getNextLine()
-        elif '<entry>' in line:
-            msg += processEntry(low_memory=True).toString(indent, initialIndent+indent, ',')
-            count += 1
-            if count % 10000 == 0:
-                appendToFile(msg)
-                msg = ""
-        try:
-            line = getNextLine()
-        except Exception:
-            line = None
-    return msg
 
 def saveData(data, indent=0):
     print("\nSaving file...")
