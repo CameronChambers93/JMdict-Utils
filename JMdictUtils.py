@@ -10,7 +10,7 @@ from JMdictToJSON import JMdictToJSON
 from RandomWordsToJSON import RandomWordsToJSON
 from QuerySpeedtest import QuerySpeedtest
 from GenerateJLPTLists import GenerateJLPTLists
-from Tests import testModules
+from Tests import TestModules
 import sys
 
 UTILS = [{'name': 'Generate Random words', 'utility': RandomWordsToJSON},
