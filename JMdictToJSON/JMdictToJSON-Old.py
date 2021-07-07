@@ -1,3 +1,11 @@
+# Original attempt at parsing JMdict, kept for posterity.
+
+# I found out afterwards that parsing XML manually is time-consuming and dangerous
+
+# I also over-engineered this process with the inclusion of classes. I wanted to gain some
+# more experience working with classes in python, but am avoiding it in future iterations
+
+
 from copy import Error
 import sys
 import pdb

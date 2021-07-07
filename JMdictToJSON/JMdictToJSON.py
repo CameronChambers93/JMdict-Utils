@@ -1,3 +1,4 @@
+import pdb
 import os
 import re
 import time
@@ -6,6 +7,7 @@ from tqdm import tqdm
 from lxml import etree as ElementTree
 import copy
 import json
+from typing import List
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 RESOURCE_DIR = os.path.abspath(os.path.join(__file__, '../../Resources/'))
@@ -55,7 +57,7 @@ SENSE_TEMPLATE = {
 }
 
 LSOURCE_TEMPLATE = {
-    "lang": "eng",
+    "lang": "eng",  # Keep uncommented - lsource elements w/o a 'lang' value are 'eng' by default
     # "text": ""
 }
 
@@ -129,6 +131,7 @@ def parseSense(elements, new_ele):
     cleanUpDict(sense)
     new_ele['sense'].append(sense)
 
+# Given a dictionary d, this method will remove all entries that have an empty array as their value
 def cleanUpDict(d):
     keys = []
     for key in d.keys():
@@ -137,7 +140,8 @@ def cleanUpDict(d):
         if d[key2] == []:
             d.pop(key2)
 
-def getDictAsStringList():
+# Converts the JMdict file to a string array
+def getDictAsStringList() -> List[str]:
     lines = []
     with tqdm(total=getLineCount()) as pbar:
         with open(os.path.join(RESOURCE_DIR, 'JMdict_e'), encoding='utf8') as o:
@@ -147,6 +151,28 @@ def getDictAsStringList():
                 line = o.readline()
                 pbar.update(1)
     return lines
+
+def lowMemoryLoadDict(indent=0):
+    pdb.set_trace()
+    print("\nParsing JMdict...\n")
+    parser = ElementTree.XMLParser(resolve_entities=False)
+    tree_parser = ElementTree.parse(FILENAME, parser).iter()
+    words = []
+    for elements in tqdm(tree_parser, total=getModifiedLineCount()):
+        if elements.tag == 'entry':
+            new_ele = copy.deepcopy(ENTRY_TEMPLATE)
+            for ele in elements.iter():
+                if ele.tag == "ent_seq":
+                    parseEnt_seq(ele, new_ele)
+                elif ele.tag == "r_ele":
+                    parseR_ele(ele, new_ele)
+                elif ele.tag == "k_ele":
+                    parseK_ele(ele, new_ele)
+                elif ele.tag == "sense":
+                    parseSense(ele, new_ele)
+            cleanUpDict(new_ele)
+            words.append(new_ele)
+    saveData(words, indent)
 
 def loadDict():
     f = getDictAsStringList()
@@ -185,7 +211,7 @@ def start(indent=0, low_memory=False):
     epoch = time.time()
 
     if (low_memory):
-        saveInPlace(indent)
+        lowMemoryLoadDict(indent)
     else:
         words = loadDict()
         saveData(words, indent)

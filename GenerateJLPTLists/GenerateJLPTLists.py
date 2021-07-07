@@ -21,10 +21,9 @@ WORD_EXCEPTIONS = json.loads(open(os.path.join(CURRENT_DIR, 'wordExceptions.json
 
 JLPT = [JLPT1_FILENAME, JLPT2_FILENAME, JLPT3_FILENAME, JLPT4_FILENAME, JLPT5_FILENAME]
 
-textDict, idDict = None, None
+TEXT_DICT, ID_DICT = None, None
 
 def startUtility():
-    global textDict, idDict
     print("\n-------------- Generate List of Words by JLPT --------------")
     getDicts()
     jlpt = getJLPT()
@@ -59,12 +58,12 @@ def getJLPT():
 def processEntry(words, ids, common, uncommon):
     found = False
     for id in ids:
-        entry = idDict.get(id)
+        entry = ID_DICT.get(id)
         if checkEntryForMatch(common, uncommon, entry):
             found = True
             words.append(id)
     if not found:
-        Exception("Could not process word")
+        Exception("Could not process word", ids, common, uncommon)
         # pdb.set_trace()
 
 def addExceptions(words, common):
@@ -73,9 +72,9 @@ def addExceptions(words, common):
             words.append(id)
 
 def getIds(common, uncommon):
-    ids = textDict.get(common)
+    ids = TEXT_DICT.get(common)
     if ids == None:
-        ids = textDict.get(uncommon)
+        ids = TEXT_DICT.get(uncommon)
 
 def saveJLPT(jlpt):
     print("\nSaving file...\n")
@@ -84,8 +83,8 @@ def saveJLPT(jlpt):
     print("File saved to {}".format(OUTPUT_FILENAME))
 
 def getDicts():
-    global textDict, idDict
-    textDict, idDict = QuerySpeedtest.getDicts()
+    global TEXT_DICT, ID_DICT
+    TEXT_DICT, ID_DICT = QuerySpeedtest.getDicts()
 
 def checkEntryForMatch(common, uncommon, entry):
     if containsKanji(common) or uncommon == '':
@@ -101,7 +100,7 @@ def checkEntryForMatch(common, uncommon, entry):
 
 def containsKanji(text):
     for char in text:
-        if ord(char) > 12543:
+        if ord(char) > 12543:   # A crude check for kanji, but shouldn't be a problem
             return True
     return False
 
